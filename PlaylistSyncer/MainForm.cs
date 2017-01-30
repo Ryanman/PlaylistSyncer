@@ -1,13 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
-using PlaylistSyncer;
 
 namespace PlaylistSyncer
 {
@@ -21,6 +15,11 @@ namespace PlaylistSyncer
         {
             InitializeComponent();
             syncButton.BackColor = Color.ForestGreen;
+            //Load Settings
+            PlaylistSyncer.LoadSettings(this);
+
+            zplExists = PlaylistSyncer.CheckExtensionExists(ZPLPathTextBox.Text, ".zpl");
+            wplExists = PlaylistSyncer.CheckExtensionExists(WPLPathTextBox.Text, ".wpl");
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -60,14 +59,22 @@ namespace PlaylistSyncer
 
         private void syncButton_Click(object sender, EventArgs e)
         {
-            if (zplExists && wplExists) //should be based on setttings
+            PlaylistSyncer.SaveSettings(this);
+            if (zplExists && wplExists)
             {
-                MessageBox.Show ("They're both there!");
+                var syncStyle = syncStyleGroup.Controls.OfType<RadioButton>().Single(x => x.Checked);
+                PlaylistSyncer.SyncPlaylists(syncStyle, ZPLPathTextBox.Text,WPLPathTextBox.Text);                
             }
             else
             {
                 MessageBox.Show("Unable to Sync - files not found in directories");
             }
+        }
+
+        private void helpButton_Click(object sender, EventArgs e)
+        {
+            var helpForm = new HelpForm();
+            helpForm.Show();
         }
     }
 }
