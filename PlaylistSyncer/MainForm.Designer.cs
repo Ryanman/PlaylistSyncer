@@ -261,8 +261,8 @@
         private System.Windows.Forms.Button WMPPlaylistBrowse;
         public System.Windows.Forms.TextBox ZPLPathTextBox;
         public System.Windows.Forms.TextBox WPLPathTextBox;
-        private System.Windows.Forms.FolderBrowserDialog zPLLocationDialog;
-        private System.Windows.Forms.FolderBrowserDialog wPLLocationDialog;
+        public System.Windows.Forms.FolderBrowserDialog zPLLocationDialog;
+        public System.Windows.Forms.FolderBrowserDialog wPLLocationDialog;
         private System.Windows.Forms.Button syncButton;
         private System.Windows.Forms.Label wplLabel;
         private System.Windows.Forms.Label zPLLabel;

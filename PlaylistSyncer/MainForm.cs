@@ -17,9 +17,11 @@ namespace PlaylistSyncer
             syncButton.BackColor = Color.ForestGreen;
             //Load Settings
             PlaylistSyncer.LoadSettings(this);
-
+            PlaylistSyncer.BuildDialogs(this);
             zplExists = PlaylistSyncer.CheckExtensionExists(ZPLPathTextBox.Text, ".zpl");
+            if (!zplExists) ZPLPathTextBox.Text = Environment.CurrentDirectory;
             wplExists = PlaylistSyncer.CheckExtensionExists(WPLPathTextBox.Text, ".wpl");
+            if (!wplExists) WPLPathTextBox.Text = Environment.CurrentDirectory;
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -29,6 +31,7 @@ namespace PlaylistSyncer
 
         private void ZPLPlaylistBrowse_Click(object sender, EventArgs e)
         {
+            
             DialogResult result = zPLLocationDialog.ShowDialog();
             if (result == DialogResult.OK)
             {
@@ -44,6 +47,7 @@ namespace PlaylistSyncer
 
         private void WMPPlaylistBrowse_Click(object sender, EventArgs e)
         {
+            
             DialogResult result = wPLLocationDialog.ShowDialog();
             if (result == DialogResult.OK)
             {
@@ -60,9 +64,15 @@ namespace PlaylistSyncer
         private void syncButton_Click(object sender, EventArgs e)
         {
             PlaylistSyncer.SaveSettings(this);
-            if (zplExists && wplExists)
-            {
-                var syncStyle = syncStyleGroup.Controls.OfType<RadioButton>().Single(x => x.Checked);
+            var checkedSyncStyleName = syncStyleGroup.Controls.OfType<RadioButton>().Single(x => x.Checked).Name;
+            var syncStyle = SyncStyle.Latest;
+            if (checkedSyncStyleName == SyncStyle.FromZune.ToString()) syncStyle = SyncStyle.FromZune;
+            else if (checkedSyncStyleName == SyncStyle.FromOther.ToString()) syncStyle = SyncStyle.FromOther;
+
+            if (zplExists && syncStyle == SyncStyle.FromZune
+                || wplExists && syncStyle == SyncStyle.FromOther
+                || syncStyle == SyncStyle.Latest)
+            {                
                 PlaylistSyncer.SyncPlaylists(syncStyle, ZPLPathTextBox.Text,WPLPathTextBox.Text);                
             }
             else

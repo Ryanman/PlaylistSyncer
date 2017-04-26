@@ -9,7 +9,7 @@ namespace PlaylistSyncer
     static class PlaylistSyncer
     {
         private const string _wpl = ".wpl";
-        private const string _zpl = ".zpl";
+        private const string _zpl = ".zpl";        
 
         /// <summary>
         /// The main entry point for the application.
@@ -37,6 +37,14 @@ namespace PlaylistSyncer
             mainForm.deleteMissingCheckbox.Checked = deleteMissing;
         }
 
+        public static void BuildDialogs(MainForm mainForm)
+        {
+            mainForm.zPLLocationDialog.RootFolder = Environment.SpecialFolder.MyComputer;
+            mainForm.zPLLocationDialog.SelectedPath = mainForm.ZPLPathTextBox.Text;
+            mainForm.wPLLocationDialog.RootFolder = Environment.SpecialFolder.MyComputer;
+            mainForm.wPLLocationDialog.SelectedPath = mainForm.WPLPathTextBox.Text;
+        }
+
         public static void SaveSettings(MainForm mainForm)
         {
             var configFile = ConfigurationManager.OpenExeConfiguration(Application.ExecutablePath);
@@ -54,12 +62,12 @@ namespace PlaylistSyncer
 
         public static bool CheckExtensionExists(string filePath, string extension)
         {
-            bool PlaylistsExist = Directory.GetFiles(filePath, ("*" + extension)).Any();
+            bool PlaylistsExist = Directory.Exists(filePath) && Directory.GetFiles(filePath, ("*" + extension)).Any();
             if (!PlaylistsExist) MessageBox.Show("No Playlists with the extension '" + extension +  "' found in this directory. Please Choose a new directory.");
             return PlaylistsExist;
         }
 
-        public static void SyncPlaylists(RadioButton syncStyle, string zunePlaylistPath, string wplPlaylistPath)
+        public static void SyncPlaylists(SyncStyle syncStyle, string zunePlaylistPath, string wplPlaylistPath)
         {
             var zunePlaylists = Directory.GetFiles(zunePlaylistPath, ("*" + _zpl)).Select(x => new FileInfo(x));
             var wplPlaylists = Directory.GetFiles(wplPlaylistPath, ("*" + _wpl)).Select(x => new FileInfo(x));
@@ -92,41 +100,25 @@ namespace PlaylistSyncer
 
             var allPlaylists = playlists.Union(excludedWpls);
 
-            switch (syncStyle.Name)
+            foreach (var playlist in allPlaylists)
             {
-                case "fromZuneRadio":
-                    foreach(var playlistWithNoWPLCopy in allPlaylists.Where(x => !x.wplModifiedTime.HasValue))
-                    {
-                        //write new .wpl file
-                    }
-                    foreach(var playlistToUpdate in allPlaylists.Where(x => x.wplModifiedTime.HasValue))
-                    {
-                        //Overwrite existing
-                    }
-                    break;
-                case "fromOtherRadio":
-                    break;
-                case "latestMirror":
-                    foreach (var playlist in allPlaylists)
-                    {
-                        if (!playlist.wplModifiedTime.HasValue)
-                        {
-                            //Write a new .wpl file
-                        }
-                        if (!playlist.zuneModifiedTime.HasValue)
-                        {
-                            //write a new .zpl file
-                        }
-                        else
-                        {
-                            var extensionToOverwrite = playlist.zuneModifiedTime > playlist.wplModifiedTime ? _wpl:_zpl;
-
-                        }
-                    }
-                    break;
+                var zuneModifiedLast = playlist.zuneModifiedTime > playlist.wplModifiedTime;
+                if (syncStyle == SyncStyle.FromZune
+                    || (syncStyle == SyncStyle.FromOther && zuneModifiedLast))
+                {
+                    //write a new .zpl file in wpl directory
+                    var fileToCopyPath = Path.Combine(zunePlaylistPath, playlist.fileName + _zpl);
+                    var newZplFile = Path.Combine(wplPlaylistPath, playlist.fileName + _zpl);
+                    File.Copy(fileToCopyPath, newZplFile,true);
+                }
+                else
+                {
+                    //write new .wpl file in zune directory
+                    var fileToCopyPath = Path.Combine(wplPlaylistPath, playlist.fileName + _wpl);
+                    var newWplFile = Path.Combine(zunePlaylistPath, playlist.fileName + _wpl);
+                    File.Copy(playlist.fileName, newWplFile, true);
+                }
             }
-                
-
 
         }
     }
